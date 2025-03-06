@@ -1,0 +1,20 @@
+type Query {
+    getUserById(id: ID!): User
+    getUsersByName(name: String!): [User]
+    greeting(name: String!): String
+}
+
+input UserRequest {
+    name: String!
+    email: String!
+}
+
+type Mutation {
+    createUser(request: UserRequest): User
+}
+
+type User {
+    id: ID
+    name: String
+    email: String
+}
