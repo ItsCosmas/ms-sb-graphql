@@ -14,14 +14,13 @@ import java.util.List;
 @Component
 public class GraphQLExceptionHandler implements DataFetcherExceptionResolver {
 
-    @Override
-    public @NonNull Mono<List<GraphQLError>> resolveException(Throwable ex, DataFetchingEnvironment env) {
-        return Mono.just(
-                Collections.singletonList(GraphqlErrorBuilder.newError()
-                        .message(ex.getMessage())  // Provide meaningful error message
-                        .path(env.getExecutionStepInfo().getPath())  // Trace the request path
-                        .location(env.getField().getSourceLocation()) // Show where the error occurred
-                        .build())
-        );
-    }
+	@Override
+	public @NonNull Mono<List<GraphQLError>> resolveException(Throwable ex, DataFetchingEnvironment env) {
+		return Mono.just(Collections.singletonList(GraphqlErrorBuilder.newError()
+			.message(ex.getMessage()) // Provide meaningful error message
+			.path(env.getExecutionStepInfo().getPath()) // Trace the request path
+			.location(env.getField().getSourceLocation()) // Show where the error occurred
+			.build()));
+	}
+
 }

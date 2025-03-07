@@ -14,32 +14,34 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 public class GraphQLLoggingFilter implements WebFilter {
-    private static final String CORRELATION_ID_HEADER = "x-correlation-id";
-    private static final String GRAPHIQL_PATH = "/graphiql";
 
-    @Override
-    public @NonNull Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
-        String path = exchange.getRequest().getURI().getPath();
+	private static final String CORRELATION_ID_HEADER = "x-correlation-id";
 
-        // Skip logging for GraphiQL UI
-        if (GRAPHIQL_PATH.equals(path)) {
-            return chain.filter(exchange);
-        }
+	private static final String GRAPHIQL_PATH = "/graphiql";
 
-        return Mono.deferContextual(ctx -> {
-            String correlationId = ctx.get(CORRELATION_ID_HEADER); // Guaranteed to exist
+	@Override
+	public @NonNull Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
+		String path = exchange.getRequest().getURI().getPath();
 
-            log.info("RequestID:{} | Path={} | Headers={}",
-                    correlationId, exchange.getRequest().getURI().getPath(), exchange.getRequest().getHeaders());
+		// Skip logging for GraphiQL UI
+		if (GRAPHIQL_PATH.equals(path)) {
+			return chain.filter(exchange);
+		}
 
-            return chain.filter(exchange)
-                    .doOnSuccess(aVoid -> logResponse(exchange, correlationId));
-        });
-    }
+		return Mono.deferContextual(ctx -> {
+			String correlationId = ctx.get(CORRELATION_ID_HEADER); // Guaranteed to exist
 
-    private void logResponse(ServerWebExchange exchange, String correlationId) {
-        ServerHttpResponse response = exchange.getResponse();
-        log.info("RequestID:{} | Status={} | Headers={}",
-                correlationId, response.getStatusCode(), response.getHeaders());
-    }
+			log.info("RequestID:{} | Path={} | Headers={}", correlationId, exchange.getRequest().getURI().getPath(),
+					exchange.getRequest().getHeaders());
+
+			return chain.filter(exchange).doOnSuccess(aVoid -> logResponse(exchange, correlationId));
+		});
+	}
+
+	private void logResponse(ServerWebExchange exchange, String correlationId) {
+		ServerHttpResponse response = exchange.getResponse();
+		log.info("RequestID:{} | Status={} | Headers={}", correlationId, response.getStatusCode(),
+				response.getHeaders());
+	}
+
 }

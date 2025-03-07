@@ -12,29 +12,31 @@ import reactor.core.publisher.Mono;
 
 @Controller
 public class GraphQLController {
-    private final GraphQLService graphQLService;
 
-    public GraphQLController(GraphQLService graphQLService) {
-        this.graphQLService = graphQLService;
-    }
+	private final GraphQLService graphQLService;
 
-    @QueryMapping
-    public Mono<User> getUserById(@Argument Long id) {
-        return graphQLService.getUserById(id);
-    }
+	public GraphQLController(GraphQLService graphQLService) {
+		this.graphQLService = graphQLService;
+	}
 
-    @QueryMapping
-    public Flux<User> getUsersByName(@Argument String name) {
-        return graphQLService.getUsersByName(name);
-    }
+	@QueryMapping
+	public Mono<User> getUserById(@Argument Long id) {
+		return graphQLService.getUserById(id);
+	}
 
-    @MutationMapping
-    public Mono<User> createUser(@Argument UserRequest request) {
-        return graphQLService.saveUser(request);
-    }
+	@QueryMapping
+	public Flux<User> getUsersByName(@Argument String name) {
+		return graphQLService.getUsersByName(name);
+	}
 
-    @QueryMapping
-    public Mono<String> greeting(@Argument String name) {
-        return graphQLService.generateGreeting(name);
-    }
+	@MutationMapping
+	public Mono<User> createUser(@Argument UserRequest request) {
+		return graphQLService.saveUser(request);
+	}
+
+	@QueryMapping
+	public Mono<String> greeting(@Argument String name) {
+		return graphQLService.generateGreeting(name);
+	}
+
 }

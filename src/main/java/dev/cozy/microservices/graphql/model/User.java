@@ -11,8 +11,12 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder
 @Table("users")
 public class User {
-    @Id
-    private Long id;
-    private String name;
-    private String email;
+
+	@Id
+	private Long id;
+
+	private String name;
+
+	private String email;
+
 }
