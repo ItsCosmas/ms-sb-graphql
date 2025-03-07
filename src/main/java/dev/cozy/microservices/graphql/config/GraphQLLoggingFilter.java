@@ -1,8 +1,7 @@
 package dev.cozy.microservices.graphql.config;
 
+import graphql.ExecutionInput;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -10,6 +9,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 @Component
@@ -28,20 +28,21 @@ public class GraphQLLoggingFilter implements WebFilter {
 			return chain.filter(exchange);
 		}
 
-		return Mono.deferContextual(ctx -> {
-			String correlationId = ctx.get(CORRELATION_ID_HEADER); // Guaranteed to exist
-
-			log.info("RequestID:{} | Path={} | Headers={}", correlationId, exchange.getRequest().getURI().getPath(),
-					exchange.getRequest().getHeaders());
-
-			return chain.filter(exchange).doOnSuccess(aVoid -> logResponse(exchange, correlationId));
-		});
+		return chain.filter(exchange).publishOn(Schedulers.boundedElastic()).doOnEach(signal -> {
+			if (signal.isOnNext()) {
+				Object executionInputObj = exchange.getAttribute("graphql-execution-input");
+				if (executionInputObj instanceof ExecutionInput executionInput) {
+					String correlationId = executionInput.getGraphQLContext().get(CORRELATION_ID_HEADER);
+					log.info("RequestID:{} | Path={} | Headers={}", correlationId,
+							exchange.getRequest().getURI().getPath(), exchange.getRequest().getHeaders());
+				}
+			}
+		}).doOnSuccess(aVoid -> logResponse(exchange));
 	}
 
-	private void logResponse(ServerWebExchange exchange, String correlationId) {
+	private void logResponse(ServerWebExchange exchange) {
 		ServerHttpResponse response = exchange.getResponse();
-		log.info("RequestID:{} | Status={} | Headers={}", correlationId, response.getStatusCode(),
-				response.getHeaders());
+		log.info("Status={} | Headers={}", response.getStatusCode(), response.getHeaders());
 	}
 
 }

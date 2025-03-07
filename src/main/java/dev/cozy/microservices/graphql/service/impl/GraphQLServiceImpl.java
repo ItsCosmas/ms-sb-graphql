@@ -1,5 +1,6 @@
 package dev.cozy.microservices.graphql.service.impl;
 
+import dev.cozy.microservices.graphql.exception.CustomGraphQLException;
 import dev.cozy.microservices.graphql.model.User;
 import dev.cozy.microservices.graphql.repository.UserRepository;
 import dev.cozy.microservices.graphql.dto.request.UserRequest;
@@ -21,11 +22,11 @@ public class GraphQLServiceImpl implements GraphQLService {
 		this.userRepository = userRepository;
 	}
 
+	/**
+	 * Retrieve correlation ID from Reactor Context
+	 */
 	private Mono<String> getCorrelationId() {
-		return Mono.deferContextual(ctx -> {
-			String correlationId = ctx.getOrDefault(CORRELATION_ID_HEADER, "UNKNOWN");
-			return Mono.just(correlationId != null ? correlationId : "UNKNOWN");
-		});
+		return Mono.deferContextual(ctx -> Mono.justOrEmpty(ctx.getOrDefault(CORRELATION_ID_HEADER, "UNKNOWN")));
 	}
 
 	@Override
@@ -42,7 +43,7 @@ public class GraphQLServiceImpl implements GraphQLService {
 	public Mono<User> getUserById(Long id) {
 		return getCorrelationId().flatMap(correlationId -> userRepository.findById(id)
 			.doOnNext(user -> log.info("Fetched User By ID: {} | RequestID:{}", user, correlationId))
-			.switchIfEmpty(Mono.error(new RuntimeException("User not found | RequestID:" + correlationId))));
+			.switchIfEmpty(Mono.error(new CustomGraphQLException(404, "User Not Found"))));
 	}
 
 	@Override
@@ -53,8 +54,9 @@ public class GraphQLServiceImpl implements GraphQLService {
 
 	@Override
 	public Mono<User> saveUser(UserRequest request) {
-		return userRepository.save(User.builder().name(request.getName()).email(request.getEmail()).build())
-			.doOnNext(savedUser -> log.info("Saved User: {}", savedUser));
+		return getCorrelationId().flatMap(correlationId -> userRepository
+			.save(User.builder().name(request.getName()).email(request.getEmail()).build())
+			.doOnNext(savedUser -> log.info("Saved User: {} | RequestID:{}", savedUser, correlationId)));
 	}
 
 }
