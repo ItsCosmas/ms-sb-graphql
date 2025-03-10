@@ -13,7 +13,7 @@ class ResponseHeaderInterceptor implements WebGraphQlInterceptor {
 	private static final String CORRELATION_ID_HEADER = "x-correlation-id";
 
 	@Override
-	public @NonNull Mono<WebGraphQlResponse> intercept(@NonNull WebGraphQlRequest request, Chain chain) {
+	public @NonNull Mono<WebGraphQlResponse> intercept(@NonNull WebGraphQlRequest request, @NonNull Chain chain) {
 		return chain.next(request).doOnNext(response -> {
 			// Retrieve correlation ID from GraphQL context
 			String correlationId = response.getExecutionInput().getGraphQLContext().get(CORRELATION_ID_HEADER);

@@ -15,7 +15,7 @@ public class RequestHeaderInterceptor implements WebGraphQlInterceptor {
 	private static final String CORRELATION_ID_HEADER = "x-correlation-id";
 
 	@Override
-	public @NonNull Mono<WebGraphQlResponse> intercept(WebGraphQlRequest request, @NonNull Chain chain) {
+	public @NonNull Mono<WebGraphQlResponse> intercept(@NonNull WebGraphQlRequest request, @NonNull Chain chain) {
 		String correlationId = request.getHeaders().getFirst(CORRELATION_ID_HEADER);
 
 		if (correlationId == null || correlationId.isBlank()) {
